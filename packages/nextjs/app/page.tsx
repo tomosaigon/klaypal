@@ -91,7 +91,9 @@ const Home: NextPage = () => {
               />
               <button
                 className="btn btn-primary"
-                onClick={async () => {
+                onClick={async event => {
+                  event.preventDefault();
+
                   try {
                     await writeTelegramBotVaultAsync({
                       functionName: "deposit",
@@ -149,7 +151,9 @@ const Home: NextPage = () => {
 
             <button
               className="btn btn-primary"
-              onClick={async () => {
+              onClick={async event => {
+                event.preventDefault();
+
                 try {
                   await writeTelegramBotVaultAsync({
                     functionName: "transfer",
