@@ -4,6 +4,7 @@
   "private": true,
   "workspaces": {
     "packages": [
+      "packages/bot",
       "packages/hardhat",
       "packages/nextjs"
     ]
