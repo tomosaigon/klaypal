@@ -50,6 +50,10 @@ const config: HardhatUserConfig = {
       url: `https://eth-mainnet.alchemyapi.io/v2/${providerApiKey}`,
       accounts: [deployerPrivateKey],
     },
+    klaytn: {
+      url: "https://public-en-cypress.klaytn.net",
+      accounts: [deployerPrivateKey],
+    },
     klaytnTestnet: {
       url: "https://public-en-baobab.klaytn.net",
       accounts: [deployerPrivateKey],

@@ -5,6 +5,9 @@ import TelegramBot, { Message } from 'node-telegram-bot-api';
 import sqlite3 from 'sqlite3';
 import { open, Database } from 'sqlite';
 
+// 0xc4eD1724823147f891c8B981F5983Ce5fbA791ae baobab
+const VAULT_ADDRESS = '0x8cA5867113299CBf1203dF160668a290690E6FC7';
+
 // Open (or/and initialize) the database
 async function initializeDatabase(): Promise<Database> {
   const db = await open({
@@ -87,7 +90,7 @@ async function main() {
     const address = match[1].trim();
     const signature = match[2].trim();
   
-    const message = 'Connect Telegram @klaypal_bot to your account for contract 0xc4eD1724823147f891c8B981F5983Ce5fbA791ae';
+    const message = 'Connect Telegram @klaypal_bot to your account for contract ' + VAULT_ADDRESS;
   
     try {
       // Recover the signer address from the signature
@@ -131,7 +134,8 @@ async function main() {
     version: '1',
     chainId: 1001, // Klaytn Baobab
     // verifyingContract: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9', // hh
-    verifyingContract: '0xc4eD1724823147f891c8B981F5983Ce5fbA791ae', // baobab
+    // verifyingContract: '0xc4eD1724823147f891c8B981F5983Ce5fbA791ae', // baobab
+    verifyingContract: VAULT_ADDRESS, // klaytn
   };
 
   const types = {
