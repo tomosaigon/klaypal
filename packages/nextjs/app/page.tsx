@@ -1,67 +1,139 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import type { NextPage } from "next";
+import { formatEther, parseEther } from "viem";
 import { useAccount } from "wagmi";
-import { BugAntIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Address } from "~~/components/scaffold-eth";
+import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 
 const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
+  const account = useAccount();
+  const [depositAmount, setDepositAmount] = useState<string>("0.1");
+  const [recipient, setRecipient] = useState("");
+  const [amount, setAmount] = useState("");
+  const [secondSignature, setSecondSignature] = useState("0x00");
+  const { data: balance } = useScaffoldReadContract({
+    contractName: "TelegramBotVault",
+    functionName: "getBalance",
+    args: [account?.address],
+  });
+  const { data: nonce } = useScaffoldReadContract({
+    contractName: "TelegramBotVault",
+    functionName: "nonces",
+    args: [account?.address],
+  });
+  const { writeContractAsync: writeTelegramBotVaultAsync } = useScaffoldWriteContract("TelegramBotVault");
 
   return (
     <>
       <div className="flex items-center flex-col flex-grow pt-10">
         <div className="px-5">
           <h1 className="text-center">
-            <span className="block text-2xl mb-2">Welcome to</span>
-            <span className="block text-4xl font-bold">Scaffold-ETH 2</span>
+            <span className="block text-4xl font-bold">Klaypal</span>
+            <span className="block text-2xl mb-2">Telegram 2FA Wallet</span>
           </h1>
           <div className="flex justify-center items-center space-x-2">
             <p className="my-2 font-medium">Connected Address:</p>
             <Address address={connectedAddress} />
           </div>
-          <p className="text-center text-lg">
-            Get started by editing{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/nextjs/app/page.tsx
-            </code>
-          </p>
-          <p className="text-center text-lg">
-            Edit your smart contract{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              YourContract.sol
-            </code>{" "}
-            in{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/hardhat/contracts
-            </code>
-          </p>
+          <div className="text-center mt-4">
+            <p className="text-lg font-medium">Balance:</p>
+            <p className="text-2xl font-bold">{balance !== undefined ? formatEther(balance) : "Loading..."}</p>
+            <p className="text-lg font-medium">Nonce:</p>
+            <p className="text-2xl font-bold">{nonce !== undefined ? nonce.toString() : "Loading..."}</p>
+          </div>
         </div>
 
-        <div className="flex-grow bg-base-300 w-full mt-16 px-8 py-12">
-          <div className="flex justify-center items-center gap-12 flex-col sm:flex-row">
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <BugAntIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Tinker with your smart contract using the{" "}
-                <Link href="/debug" passHref className="link">
-                  Debug Contracts
-                </Link>{" "}
-                tab.
-              </p>
+        <div className="px-5">
+          <h1 className="text-center">
+            <span className="block text-4xl font-bold">Deposit</span>
+          </h1>
+          <form className="mt-4">
+            <div className="mb-4">
+              <label className="block text-lg font-medium mb-2">Deposit Amount (ETH):</label>
+              <input
+                type="number"
+                step="0.01"
+                value={depositAmount}
+                onChange={e => setDepositAmount(e.target.value)}
+                className="input input-bordered w-full max-w-xs"
+              />
+              <button
+                className="btn btn-primary"
+                onClick={async () => {
+                  try {
+                    await writeTelegramBotVaultAsync({
+                      functionName: "deposit",
+                      args: [account?.address],
+                      value: parseEther(depositAmount),
+                    });
+                  } catch (e) {
+                    console.error("Deposit Error:", e);
+                  }
+                }}
+              >
+                Deposit
+              </button>
             </div>
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <MagnifyingGlassIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Explore your local transactions with the{" "}
-                <Link href="/blockexplorer" passHref className="link">
-                  Block Explorer
-                </Link>{" "}
-                tab.
-              </p>
+          </form>
+
+          <hr />
+          <h1 className="text-center">
+            <span className="block text-4xl font-bold">Transfer</span>
+          </h1>
+          <form className="mt-4">
+            <div className="mb-4">
+              <label className="block text-lg font-medium mb-2">Recipient Address:</label>
+              <input
+                type="text"
+                value={recipient}
+                onChange={e => setRecipient(e.target.value)}
+                className="input input-bordered w-full max-w-xs"
+                required
+              />
             </div>
-          </div>
+
+            <div className="mb-4">
+              <label className="block text-lg font-medium mb-2">Amount (ETH):</label>
+              <input
+                type="number"
+                step="0.01"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                className="input input-bordered w-full max-w-xs"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-lg font-medium mb-2">Second Signature:</label>
+              <input
+                type="text"
+                value={secondSignature}
+                onChange={e => setSecondSignature(e.target.value)}
+                className="input input-bordered w-full max-w-xs"
+                required
+              />
+            </div>
+
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                try {
+                  await writeTelegramBotVaultAsync({
+                    functionName: "transfer",
+                    args: [recipient, parseEther(amount), nonce, secondSignature as `0x${string}`],
+                  });
+                } catch (e) {
+                  console.error("Error:", e);
+                }
+              }}
+            >
+              Transfer Tokens
+            </button>
+          </form>
         </div>
       </div>
     </>
