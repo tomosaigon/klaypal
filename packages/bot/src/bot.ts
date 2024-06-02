@@ -102,8 +102,9 @@ async function main() {
   const domain = {
     name: 'TelegramBotVault',
     version: '1',
-    chainId: 31337,
-    verifyingContract: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9',
+    chainId: 1001, // Klaytn Baobab
+    // verifyingContract: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9', // hh
+    verifyingContract: '0xc4eD1724823147f891c8B981F5983Ce5fbA791ae', // baobab
   };
 
   const types = {
