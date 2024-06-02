@@ -59,24 +59,51 @@ async function main() {
   const db = await initializeDatabase();
   const bot = new TelegramBot(token, { polling: true });
 
-  // Command to register Ethereum address
-  bot.onText(/\/register (.+)/, async (msg, match) => {
+  // // Command to register Ethereum address
+  // bot.onText(/\/register (.+)/, async (msg, match) => {
+  //   if (!match) return;
+
+  //   const chatId = msg.chat.id;
+  //   const ethereumAddress = match[1].trim();
+
+  //   try {
+  //     // Store the user's Ethereum address in the database
+  //     await db.run(`
+  //       INSERT INTO users (telegram_id, ethereum_address) VALUES (?, ?)
+  //       ON CONFLICT(telegram_id) DO UPDATE SET ethereum_address=excluded.ethereum_address
+  //     `, [chatId, ethereumAddress]);
+
+  //     bot.sendMessage(chatId, 'Your Ethereum address has been registered successfully.');
+  //   } catch (error) {
+  //     console.error('Error storing Ethereum address:', error);
+  //     bot.sendMessage(chatId, 'There was an error registering your Ethereum address. Please try again later.');
+  //   }
+  // });
+
+  bot.onText(/\/connect (.+) (.+)/, async (msg: Message, match: RegExpExecArray | null) => {
     if (!match) return;
-
+  
     const chatId = msg.chat.id;
-    const ethereumAddress = match[1].trim();
-
+    const address = match[1].trim();
+    const signature = match[2].trim();
+  
+    const message = 'Connect Telegram @klaypal_bot to your account for contract 0xc4eD1724823147f891c8B981F5983Ce5fbA791ae';
+  
     try {
-      // Store the user's Ethereum address in the database
-      await db.run(`
-        INSERT INTO users (telegram_id, ethereum_address) VALUES (?, ?)
-        ON CONFLICT(telegram_id) DO UPDATE SET ethereum_address=excluded.ethereum_address
-      `, [chatId, ethereumAddress]);
-
-      bot.sendMessage(chatId, 'Your Ethereum address has been registered successfully.');
+      // Recover the signer address from the signature
+      const recoveredAddress = ethers.utils.verifyMessage(message, signature);
+      console.log('Recovered address:', recoveredAddress);
+  
+      if (recoveredAddress.toLowerCase() === address.toLowerCase()) {
+        await db.run('INSERT OR REPLACE INTO users (telegram_id, ethereum_address) VALUES (?, ?)', [chatId, address]);
+  
+        bot.sendMessage(chatId, `Address ${address} successfully connected.`);
+      } else {
+        bot.sendMessage(chatId, 'Signature verification failed. The recovered address does not match the provided address.');
+      }
     } catch (error) {
-      console.error('Error storing Ethereum address:', error);
-      bot.sendMessage(chatId, 'There was an error registering your Ethereum address. Please try again later.');
+      console.error('Error connecting address:', error);
+      bot.sendMessage(chatId, 'There was an error connecting the address. Please try again later.');
     }
   });
 
